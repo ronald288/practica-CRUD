@@ -16,14 +16,18 @@ app.use(userRoutes);
 const startServer = async () => {
   //try y catch es un red para capturar errores
   try {
-    await connectDB(); //esperar conexion
+    await connectDB(); //esperar la respuesta de la promesa
     // listen escuchar peticiones en un puerto
     // inicia el servidor, abre el puerto, escucha peticiones
-    app.listen(process.env.PORT, () => {
+    const server = app.listen(process.env.PORT, () => {
       console.log("Servidor corriendo en puerto 3000");
     });
+    // escucha un evento que puede ocurrir en el servidor
+    server.on("error", (error) => {
+      console.log("error en el servidor", error);
+    });
   } catch (error) {
-    console.error("error al conectar a MySQL:".error);
+    console.error("error al conectar a MySQL:", error);
   }
 };
 

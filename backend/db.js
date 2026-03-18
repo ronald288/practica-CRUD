@@ -2,8 +2,7 @@
 const mysql = require("mysql2");
 require("dotenv").config();
 
-//connection es el objeto que REPRESENTA la conexión - Usa la conexión para hablar con la base de datos
-// el objeto contiene los parametros necesarios de la funcion createConnection
+// createConnection crea un objeto de conexión hacia MySQL
 const connection = mysql.createConnection({
   // **VARIABLES DE ENTORNO**
   host: process.env.DB_HOST,
@@ -13,6 +12,7 @@ const connection = mysql.createConnection({
 });
 // función que INICIA la conexión BD y servidor
 const connectDB = () => {
+  // promise ->Un objeto que representa un resultado futuro (éxito o error)
   return new Promise((resolve, reject) => {
     //Aquí Node intenta conectarse a MySQL.
     //connect es una función del objeto connection
@@ -26,6 +26,5 @@ const connectDB = () => {
     });
   });
 };
-// Permite que otros archivos usen esta conexión
 //exportacion de un objeto
 module.exports = { connection, connectDB };
