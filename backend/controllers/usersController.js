@@ -1,63 +1,137 @@
 const bcrypt = require("bcrypt");
-const { getAllUsers } = require("../models/userModel");
-const { createUser } = require("../models/userModel");
-const { getUserById } = require("../models/userModel");
+const {
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+  getUserByEmail,
+} = require("../models/userModel");
 
 // ***** OBTENER LISTA DE USUARIO*****
-//getUser es una funcion creada que se ejecuta cuando alguien haga el get/users
 //req-res es por que en users se necesitan estos parametros
-const getUsers = (req, res) => {
-  //respuesta del callback hecho en el modelo
-  getAllUsers((err, results) => {
-    if (err) {
-      console.error("Error en la consulta:", err);
-      // res es el objeto que usas para responder al cliente
-      return res.status(500).json({ error: "Error en el servidor" });
-    }
-    const users = results.map((user) => {
-      const { password, ...rest } = user;
-      return rest;
-    });
+const getUsers = async (req, res) => {
+  try {
+    const results = await getAllUsers();
+    //...rest Extrae la propiedad password y guarda todas las otras propiedades en un nuevo objeto rest
+    const users = results.map(({ password, ...rest }) => rest);
+    // res es el objeto que usas para responder al cliente
     res.json(users);
-  });
+  } catch (err) {
+    console.error("Error en la consulta:", err);
+    res.status(500).json({ error: "Error en el servidor" });
+  }
 };
 
 // ***** OBTENER USUARIO POR ID*****
-const getUserByIdController = (req, res) => {
+const getUserByIdController = async (req, res) => {
   const { id } = req.params;
-
-  getUserById(id, (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: "Error en el servidor" });
-    }
+  try {
+    const results = await getUserById(id);
     if (results.length === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
     res.json(results[0]);
-  });
+  } catch (err) {
+    res.status(500).json({ error: "Error en el servidor" });
+  }
 };
 
 // ****CREAR USUARIO****
 const createUserController = async (req, res) => {
   const { name, email, password } = req.body;
-  if (!name || !email || !password) {
+
+  if (!name || !name.trim() || !email || !email.trim() || !password) {
     return res.status(400).json({ error: "Datos incompletos" });
   }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: "Email inválido" });
+  }
+
   try {
-    // Encriptar contraseña
+    // validar si ya existe
+    const existingUser = await getUserByEmail(email);
+
+    if (existingUser.length > 0) {
+      return res.status(400).json({ error: "El email ya está registrado" });
+    }
+
+    // encriptar contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
-    createUser(name, email, hashedPassword, (err, result) => {
-      if (err) {
-        return res.status(500).json({ error: "error en el servidor" });
-      }
-      res.status(201).json({
-        message: "usuario creado",
-        id: result.insertId,
-      });
+
+    // crear usuario
+    const result = await createUser(name, email, hashedPassword);
+
+    res.status(201).json({
+      message: "Usuario creado",
+      id: result.insertId,
     });
   } catch (error) {
-    res.status(500).json({ error: "Error al encriptar contraseña" });
+    res.status(500).json({ error: "Error en el servidor" });
   }
 };
 
-module.exports = { getUsers, createUserController, getUserByIdController };
+// ***** ACTUALIZAR USUARIO *****
+const updateUserController = async (req, res) => {
+  const { id } = req.params;
+  const { name, email, password } = req.body;
+
+  if (!name || !name.trim() || !email || !email.trim()) {
+    return res.status(400).json({ error: "Datos incompletos" });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: "Email inválido" });
+  }
+
+  try {
+    const existingUser = await getUserByEmail(email);
+
+    // permitir mismo email si es el mismo usuario
+    if (existingUser.length > 0 && existingUser[0].id != id) {
+      return res.status(400).json({ error: "El email ya está registrado" });
+    }
+
+    let hashedPassword = null;
+
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
+    const result = await updateUser(id, name, email, hashedPassword);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    res.json({ message: "Usuario actualizado" });
+  } catch (error) {
+    res.status(500).json({ error: "Error en el servidor" });
+  }
+};
+
+// ****ELIMINAR USUARIO*****
+const deleteUserController = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await deleteUser(id);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.json({ message: "Usuario eliminado" });
+  } catch (error) {
+    res.status(500).json({ error: "Error en el servidor" });
+  }
+};
+
+module.exports = {
+  getUsers,
+  createUserController,
+  getUserByIdController,
+  updateUserController,
+  deleteUserController,
+};
