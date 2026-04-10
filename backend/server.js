@@ -4,11 +4,13 @@ const express = require("express"); // requiere funcion para importa una librer�
 const app = express(); //Crear una aplicación backend usando Express.
 const { connectDB } = require("./db"); //Destructuración ({}eligir UNA propiedad del objeto exportado)
 const userRoutes = require("./routes/users"); //importar rutas
+const cors = require("cors");
 
 // ****MIDDLEWAR Y RUTAS*****
 //.use() quiere decir usa esto en TODAS las peticiones
 //una función que se ejecuta ANTES de que la petición llegue a tu endpoint
 //express.json es un middlewar que permite que el servidor entienda datos JSON
+app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(userRoutes);
 
