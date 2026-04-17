@@ -95,9 +95,8 @@ const updateUserController = async (req, res) => {
       return res.status(400).json({ error: "El email ya está registrado" });
     }
 
-    let hashedPassword = null;
-
-    if (password) {
+    let hashedPassword;
+    if (password && password.trim() !== "") {
       hashedPassword = await bcrypt.hash(password, 10);
     }
     const result = await updateUser(id, name, email, hashedPassword);

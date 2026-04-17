@@ -36,7 +36,7 @@ const updateUser = (id, name, email, password) => {
     let sql;
     let params;
 
-    if (password) {
+    if (password && password.trim() !== "") {
       sql = "UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?";
       params = [name, email, password, id];
     } else {
