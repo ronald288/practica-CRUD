@@ -49,7 +49,6 @@ const createUserController = async (req, res) => {
   if (!emailRegex.test(email)) {
     return res.status(400).json({ error: "Email inválido" });
   }
-
   try {
     // validar si ya existe
     const existingUser = await getUserByEmail(email);
@@ -64,10 +63,7 @@ const createUserController = async (req, res) => {
     // crear usuario
     const result = await createUser(name, email, hashedPassword);
 
-    res.status(201).json({
-      message: "Usuario creado",
-      id: result.insertId,
-    });
+    res.status(201).json({ id: result.insertId });
   } catch (error) {
     res.status(500).json({ error: "Error en el servidor" });
   }
@@ -90,7 +86,6 @@ const updateUserController = async (req, res) => {
   try {
     const existingUser = await getUserByEmail(email);
 
-    // permitir mismo email si es el mismo usuario
     if (existingUser.length > 0 && existingUser[0].id != id) {
       return res.status(400).json({ error: "El email ya está registrado" });
     }
@@ -120,8 +115,7 @@ const deleteUserController = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
-
-    res.json({ message: "Usuario eliminado" });
+    res.sendStatus(204);
   } catch (error) {
     res.status(500).json({ error: "Error en el servidor" });
   }
