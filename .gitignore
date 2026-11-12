@@ -1,0 +1,14 @@
+# Dependencias
+node_modules/
+
+# Archivos de compilación
+dist/
+dist-ssr/
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Archivos locales
+*.local
